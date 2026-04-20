@@ -1,0 +1,18 @@
+# functions/requirements.txt
+
+azure-functions==1.20.0
+azure-identity==1.18.0
+azure-keyvault-secrets==4.8.0
+azure-storage-blob==12.22.0
+azure-search-documents==11.6.0b1
+azure-servicebus==7.12.2
+
+# OpenAI
+openai==1.47.0
+
+# Data Processing
+pandas==2.2.2
+chardet==5.2.0
+
+# Database
+asyncpg==0.29.0

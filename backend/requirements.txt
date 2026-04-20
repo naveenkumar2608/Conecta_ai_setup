@@ -1,0 +1,45 @@
+# backend/requirements.txt
+
+# FastAPI & Server
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-multipart==0.0.9
+
+# LangChain & LangGraph
+langchain==0.3.1
+langchain-openai==0.2.1
+langchain-core==0.3.6
+langgraph==0.2.28
+
+# Azure SDKs
+azure-identity==1.18.0
+azure-keyvault-secrets==4.8.0
+azure-storage-blob==12.22.0
+azure-search-documents==11.6.0b1
+azure-servicebus==7.12.2
+azure-ai-contentsafety==1.0.0
+
+# Database
+sqlalchemy[asyncio]==2.0.35
+asyncpg==0.29.0
+alembic==1.13.2
+
+# Redis
+redis[hiredis]==5.1.0
+
+# HTTP Client
+httpx==0.27.2
+
+# Auth
+python-jose[cryptography]==3.3.0
+
+# Utilities
+chardet==5.2.0
+pandas==2.2.2
+python-dotenv==1.0.1
+
+# Observability
+opencensus-ext-azure==1.1.13
+applicationinsights==0.11.10
