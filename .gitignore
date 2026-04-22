@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing / Coverage
+.cache
+.pytest_cache/
+.mypy_cache/
+.coverage
+.noseresults
+nosetests.xml
+db.sqlite3
+db.sqlite3-journal
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Azure Functions
+backend/functions/.python_packages/
+backend/functions/.azurefunctions/
+backend/functions/bin/
+backend/functions/obj/
+
+# Infrastructure (Terraform/Bicep/ARM)
+.terraform/
+*.tfstate
+*.tfstate.backup
+plan.out
+*.parameters.local.json
+
+# Project specific secrets
+secrets.json
+.azure/
