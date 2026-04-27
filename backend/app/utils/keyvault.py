@@ -49,11 +49,14 @@ class KeyVaultManager:
 
 
 @lru_cache(maxsize=1)
-def get_keyvault_manager() -> KeyVaultManager:
+def get_keyvault_manager(vault_url: str | None = None) -> KeyVaultManager:
     """Singleton Key Vault manager."""
     import os
-    vault_url = os.getenv("AZURE_KEYVAULT_URL", "")
-    if not vault_url:
-        logger.warning("AZURE_KEYVAULT_URL is not set in environment.")
-    return KeyVaultManager(vault_url)
+    url = vault_url or os.getenv("AZURE_KEYVAULT_URL", "")
+    
+    if not url:
+        logger.warning("Key Vault URL is missing. Secrets retrieval will fail.")
+        
+    return KeyVaultManager(url)
+
 

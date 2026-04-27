@@ -21,12 +21,14 @@ from app.repositories.postgres_repo import PostgresRepository
 from app.repositories.blob_repo import BlobRepository
 from app.repositories.search_repo import SearchRepository
 
-from app.agents.supervisor import SupervisorAgent
-from app.agents.retrieval_agent import RetrievalAgent
-from app.agents.coaching_agent import CoachingInsightsAgent
-
-from app.agents.recommendation_agent import RecommendationAgent
-from app.agents.graph import CoachingGraphBuilder
+from app.agents.orchestrator.intent_agent import IntentAgent
+from app.agents.orchestrator.planner_agent import PlannerAgent
+from app.agents.orchestrator.executor import Executor
+from app.agents.orchestrator.aggregator import Aggregator
+from app.agents.implementations.retrieval_agent import RetrievalAgent
+from app.agents.implementations.coaching_agent import CoachingInsightsAgent
+from app.agents.implementations.recommendation_agent import RecommendationAgent
+from app.agents.graph import AgentGraph
 
 import logging
 
@@ -38,7 +40,6 @@ _embedding_service: EmbeddingService | None = None
 _search_service: SearchService | None = None
 _content_safety: ContentSafetyService | None = None
 _translation_service: TranslationService | None = None
-
 _cache_service: CacheService | None = None
 _chat_service: ChatService | None = None
 _service_bus: ServiceBusPublisher | None = None
@@ -51,9 +52,7 @@ async def init_services():
     """Initialize all service singletons at application startup."""
     global _llm_service, _embedding_service, _search_service
     global _content_safety, _translation_service
-
     global _cache_service, _chat_service, _service_bus
-
     global _postgres_repo, _blob_repo, _search_repo
 
     logger.info("Initializing services...")
@@ -74,38 +73,43 @@ async def init_services():
     _content_safety = ContentSafetyService()
     _translation_service = TranslationService()
     _cache_service = CacheService()
-
+    _service_bus = ServiceBusPublisher()
 
     # ── Initialize agents ───────────────────────────
-    supervisor = SupervisorAgent(llm_service=_llm_service)
+    intent_agent = IntentAgent(llm_service=_llm_service)
+    planner_agent = PlannerAgent(llm_service=_llm_service)
+    executor = Executor()
+    aggregator = Aggregator()
+    
     retrieval_agent = RetrievalAgent(
         search_service=_search_service,
         embedding_service=_embedding_service,
     )
     coaching_agent = CoachingInsightsAgent(llm_service=_llm_service)
-
     recommendation_agent = RecommendationAgent(llm_service=_llm_service)
 
-    # ── Build LangGraph with Redis checkpointer ────
-    graph_builder = CoachingGraphBuilder(
-        supervisor=supervisor,
+    # ── Build LangGraph Agentic Workflow ───────────
+    graph_builder = AgentGraph(
+        intent_agent=intent_agent,
+        planner_agent=planner_agent,
+        executor=executor,
+        aggregator=aggregator,
         retrieval_agent=retrieval_agent,
         coaching_agent=coaching_agent,
-
         recommendation_agent=recommendation_agent,
-        content_safety=_content_safety,
-        redis_client=_cache_service.client,  # Redis for state persistence
     )
+    graph = graph_builder.build()
 
     # ── Initialize chat service ─────────────────────
     _chat_service = ChatService(
-        graph=graph_builder,
+        graph=graph,
         cache_service=_cache_service,
         translation_service=_translation_service,
         postgres_repo=_postgres_repo,
     )
 
     logger.info("All services initialized successfully")
+
 
 
 async def shutdown_services():

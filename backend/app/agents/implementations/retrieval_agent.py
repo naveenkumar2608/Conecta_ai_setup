@@ -2,7 +2,7 @@ from langchain_core.messages import AIMessage
 from app.agents.state import AgentState
 from app.services.search_service import SearchService
 from app.services.embedding_service import EmbeddingService
-from app.services.analytics_service import AnalyticsService
+
 
 
 class RetrievalAgent:
@@ -22,11 +22,10 @@ class RetrievalAgent:
         self,
         search_service: SearchService,
         embedding_service: EmbeddingService,
-        analytics_service: AnalyticsService,
     ):
         self.search_service = search_service
         self.embedding_service = embedding_service
-        self.analytics_service = analytics_service
+
 
     async def retrieve(self, state: AgentState) -> AgentState:
         query = state.get("search_query")
@@ -67,32 +66,10 @@ class RetrievalAgent:
         ]
 
         # ─────────────────────────────────────────────
-        # 2. PostgreSQL Retrieval (LIGHTWEIGHT CONTEXT)
+        # 2. Results
         # ─────────────────────────────────────────────
+        combined_results = document_results
 
-        structured_results = []
-
-        try:
-            # Example: fetch recent coaching summaries
-            db_data = await self.analytics_service.fetch_recent_activity(
-                user_id=state["user_id"]
-            )
-
-            for row in db_data:
-                structured_results.append({
-                    "type": "structured",
-                    "content": str(row),
-                    "source": "postgres",
-                })
-
-        except Exception:
-            # Do not break flow if DB fails
-            structured_results = []
-
-        # ─────────────────────────────────────────────
-        # 3. Combine Results
-        # ─────────────────────────────────────────────
-        combined_results = document_results + structured_results
 
         # Limit final results
         top_results = combined_results[:5]

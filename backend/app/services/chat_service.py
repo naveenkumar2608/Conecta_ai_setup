@@ -1,6 +1,8 @@
-# backend/app/services/chat_service.py
 from langchain_core.messages import HumanMessage
-from app.agents.graph import CoachingGraphBuilder
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.agents.graph import AgentGraph
+
 from app.agents.state import AgentState
 from app.services.cache_service import CacheService
 from app.services.translation_service import TranslationService
@@ -25,7 +27,8 @@ class ChatService:
 
     def __init__(
         self,
-        graph: CoachingGraphBuilder,
+        graph: "AgentGraph",
+
         cache_service: CacheService,
         translation_service: TranslationService,
         postgres_repo: PostgresRepository,

@@ -170,7 +170,8 @@ class PostgresRepository:
                 content=content,
                 intent=intent,
                 sources=sources,
-                metadata=metadata,
+                msg_metadata=metadata,
+
                 created_at=timestamp or datetime.now(timezone.utc),
             )
             session.add(message)

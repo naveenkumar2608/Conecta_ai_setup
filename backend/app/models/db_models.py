@@ -250,7 +250,8 @@ class ConversationMessage(Base):
     content = Column(Text, nullable=False)
     intent = Column(String(50))
     sources = Column(JSONB)
-    metadata = Column(JSONB)
+    msg_metadata = Column(JSONB)
+
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

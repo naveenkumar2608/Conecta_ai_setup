@@ -3,6 +3,11 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from app.utils.keyvault import get_keyvault_manager
 import os
+from dotenv import load_dotenv
+
+# Load .env into os.environ for local development
+load_dotenv()
+
 
 
 class Settings(BaseSettings):
@@ -35,7 +40,9 @@ class SecretsManager:
     """Loads all credentials and endpoints from Azure Key Vault at startup."""
 
     def __init__(self):
-        self._kv = get_keyvault_manager()
+        settings = get_settings()
+        self._kv = get_keyvault_manager(settings.azure_keyvault_url)
+
 
     def _get_env_or_kv(self, env_name: str, kv_name: str, default: str = "") -> str:
         """Helper to check environment first (for local dev) then Key Vault."""
@@ -67,31 +74,32 @@ class SecretsManager:
     # --- API Keys & Connection Strings ---
     @property
     def openai_api_key(self) -> str:
-        return self._kv.get_secret("azure-openai-api-key")
+        return self._get_env_or_kv("AZURE_OPENAI_API_KEY", "azure-openai-api-key")
 
     @property
     def search_api_key(self) -> str:
-        return self._kv.get_secret("azure-search-api-key")
+        return self._get_env_or_kv("AZURE_SEARCH_API_KEY", "azure-search-api-key")
 
     @property
     def postgres_connection_string(self) -> str:
-        return self._kv.get_secret("postgres-connection-string")
+        return self._get_env_or_kv("POSTGRES_CONNECTION_STRING", "postgres-connection-string")
 
     @property
     def redis_password(self) -> str:
-        return self._kv.get_secret("azure-redis-password")
+        return self._get_env_or_kv("AZURE_REDIS_PASSWORD", "azure-redis-password")
 
     @property
     def service_bus_connection_string(self) -> str:
-        return self._kv.get_secret("service-bus-connection-string")
+        return self._get_env_or_kv("SERVICE_BUS_CONNECTION_STRING", "service-bus-connection-string")
 
     @property
     def content_safety_key(self) -> str:
-        return self._kv.get_secret("content-safety-api-key")
+        return self._get_env_or_kv("CONTENT_SAFETY_API_KEY", "content-safety-api-key")
 
     @property
     def translator_key(self) -> str:
-        return self._kv.get_secret("translator-api-key")
+        return self._get_env_or_kv("TRANSLATOR_API_KEY", "translator-api-key")
+
 
     # --- Deployment Names & Model Configuration ---
     @property
