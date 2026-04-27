@@ -10,9 +10,9 @@ from app.agents.orchestrator.aggregator import Aggregator
 
 # Agents
 from app.agents.implementations.retrieval_agent import RetrievalAgent
-from app.agents.implementations.analytics_agent import AnalyticsAgent
 from app.agents.implementations.coaching_agent import CoachingInsightsAgent
 from app.agents.implementations.recommendation_agent import RecommendationAgent
+
 
 
 class AgentGraph:
@@ -24,18 +24,18 @@ class AgentGraph:
         executor: Executor,
         aggregator: Aggregator,
         retrieval_agent: RetrievalAgent,
-        analytics_agent: AnalyticsAgent,
         coaching_agent: CoachingInsightsAgent,
         recommendation_agent: RecommendationAgent,
     ):
+
         self.intent_agent = intent_agent
         self.planner_agent = planner_agent
         self.executor = executor
         self.aggregator = aggregator
         self.retrieval_agent = retrieval_agent
-        self.analytics_agent = analytics_agent
         self.coaching_agent = coaching_agent
         self.recommendation_agent = recommendation_agent
+
 
     def build(self):
         workflow = StateGraph(AgentState)
@@ -50,9 +50,9 @@ class AgentGraph:
 
         # Agents
         workflow.add_node("retrieval_agent", self.retrieval_agent.retrieve)
-        workflow.add_node("analytics_agent", self.analytics_agent.compute_analytics)
         workflow.add_node("coaching_agent", self.coaching_agent.generate_insights)
         workflow.add_node("recommendation_agent", self.recommendation_agent.recommend)
+
 
         # ─────────────────────────────────────────────
         # Edges (Linear Start)
@@ -70,18 +70,18 @@ class AgentGraph:
             lambda state: state.get("next_node"),
             {
                 "retrieval_agent": "retrieval_agent",
-                "analytics_agent": "analytics_agent",
                 "coaching_agent": "coaching_agent",
                 "recommendation_agent": "recommendation_agent",
                 "aggregator": "aggregator",
             }
+
         )
 
         # ─────────────────────────────────────────────
         # Loop back to executor after each agent
         # ─────────────────────────────────────────────
         workflow.add_edge("retrieval_agent", "executor")
-        workflow.add_edge("analytics_agent", "executor")
+
         workflow.add_edge("coaching_agent", "executor")
         workflow.add_edge("recommendation_agent", "executor")
 

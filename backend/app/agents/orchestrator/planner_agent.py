@@ -6,10 +6,10 @@ import json
 
 VALID_AGENTS = [
     "retrieval_agent",
-    "analytics_agent",
     "coaching_agent",
     "recommendation_agent",
 ]
+
 
 
 PLANNER_PROMPT = """
@@ -17,11 +17,11 @@ You are an AI workflow planner.
 
 Available agents:
 - retrieval_agent → fetch documents/data
-- analytics_agent → compute KPIs and metrics
 - coaching_agent → generate insights
 - recommendation_agent → suggest improvements/actions
 
 You will receive:
+
 - user query
 - detected intents
 
@@ -33,10 +33,10 @@ Your job:
 Planning Rules:
 - If recommendation is present → include retrieval_agent BEFORE recommendation_agent
 - If coaching_insights is present → include coaching_agent
-- If analytics is present → include analytics_agent
 - If retrieval is present → include retrieval_agent
 - Avoid duplicates
 - Keep plan minimal and logical
+
 
 Return JSON ONLY:
 {
@@ -72,7 +72,7 @@ class PlannerAgent:
         intents = state.get("intent", [])
 
         # ─────────────────────────────────────────────
-        # 🧠 LLM Planning
+        # LLM Planning
         # ─────────────────────────────────────────────
         chain = self.prompt | self.llm_service.get_chat_model(
             temperature=0.0,

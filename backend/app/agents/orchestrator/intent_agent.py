@@ -11,7 +11,6 @@ Classify the user query into one or more of the following intents:
 
 - retrieval
 - coaching_insights
-- analytics
 - recommendation
 
 Rules:
@@ -29,9 +28,9 @@ Return JSON ONLY:
 VALID_INTENTS = {
     "retrieval",
     "coaching_insights",
-    "analytics",
     "recommendation",
 }
+
 
 
 class IntentAgent:

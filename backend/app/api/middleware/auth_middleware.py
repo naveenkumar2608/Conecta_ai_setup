@@ -8,11 +8,16 @@ from jose import jwt, JWTError
 from app.config import get_settings
 import httpx
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 # Paths that don't require authentication
 PUBLIC_PATHS = {"/health", "/api/docs", "/openapi.json"}
+# Developer bypass configuration (for local testing)
+DEVELOPER_BYPASS_HEADER = "X-Developer-Id"
+ALLOW_AUTH_BYPASS = os.getenv("ALLOW_AUTH_BYPASS", "false").lower() == "true"
+
 
 
 class AzureADAuthMiddleware(BaseHTTPMiddleware):
@@ -43,6 +48,16 @@ class AzureADAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
+        # Check for Developer Bypass (only if enabled via env)
+        dev_id = request.headers.get(DEVELOPER_BYPASS_HEADER)
+        if ALLOW_AUTH_BYPASS and dev_id:
+            logger.info(f"Using developer bypass for user: {dev_id}")
+            request.state.user_id = dev_id
+            request.state.user_email = f"{dev_id}@dev.local"
+            request.state.user_name = f"Dev User ({dev_id})"
+            request.state.user_roles = ["admin", "developer"]
+            return await call_next(request)
+
         # Extract Bearer token
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
@@ -50,6 +65,7 @@ class AzureADAuthMiddleware(BaseHTTPMiddleware):
                 status_code=401,
                 content={"detail": "Missing or invalid authorization header"},
             )
+
 
         token = auth_header.split("Bearer ")[1]
 

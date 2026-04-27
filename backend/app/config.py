@@ -6,41 +6,25 @@ import os
 
 
 class Settings(BaseSettings):
-    """Application settings — loads from environment + Key Vault."""
+    """Application settings — loads minimal config from environment."""
 
-    # Azure identifiers (from environment)
-    azure_keyvault_url: str = os.getenv(
-        "AZURE_KEYVAULT_URL", ""
-    )
+    # Key Vault identifier (MUST be in environment/.env)
+    azure_keyvault_url: str = os.getenv("AZURE_KEYVAULT_URL", "")
+    
+    # Identity identifiers (optional if using System Managed Identity)
     azure_tenant_id: str = os.getenv("AZURE_TENANT_ID", "")
     azure_client_id: str = os.getenv("AZURE_CLIENT_ID", "")
 
-    # Service endpoints (from environment)
-    azure_openai_endpoint: str = os.getenv(
-        "AZURE_OPENAI_ENDPOINT", ""
-    )
-    azure_search_endpoint: str = os.getenv(
-        "AZURE_SEARCH_ENDPOINT", ""
-    )
-    azure_storage_account_url: str = os.getenv(
-        "AZURE_STORAGE_ACCOUNT_URL", ""
-    )
-    azure_redis_host: str = os.getenv("AZURE_REDIS_HOST", "")
-    azure_service_bus_namespace: str = os.getenv(
-        "AZURE_SERVICE_BUS_NAMESPACE", ""
-    )
+    # Application Metadata
+    app_name: str = "Conecta AI"
+    version: str = "1.0.0"
 
-    # Model configurations
-    openai_chat_deployment: str = "gpt-4o"
-    openai_embedding_deployment: str = "text-embedding-3-large"
-    embedding_dimensions: int = 3072
-    
-    # Search configuration
+    # Search configuration (non-secret)
     search_index_name: str = "connecta-coaching-index"
     search_semantic_config: str = "connecta-semantic-config"
 
     # CORS
-    allowed_origins: list[str] = ["https://connecta.abbott.com"]
+    allowed_origins: list[str] = ["https://connecta.abbott.com", "http://localhost:3000"]
 
     class Config:
         env_file = ".env"
@@ -48,11 +32,39 @@ class Settings(BaseSettings):
 
 
 class SecretsManager:
-    """Loads secrets from Azure Key Vault at startup."""
+    """Loads all credentials and endpoints from Azure Key Vault at startup."""
 
     def __init__(self):
         self._kv = get_keyvault_manager()
 
+    def _get_env_or_kv(self, env_name: str, kv_name: str, default: str = "") -> str:
+        """Helper to check environment first (for local dev) then Key Vault."""
+        val = os.getenv(env_name)
+        if val:
+            return val
+        try:
+            return self._kv.get_secret(kv_name)
+        except Exception:
+            return default
+
+    # --- Endpoints ---
+    @property
+    def azure_openai_endpoint(self) -> str:
+        return self._get_env_or_kv("AZURE_OPENAI_ENDPOINT", "azure-openai-endpoint")
+
+    @property
+    def azure_search_endpoint(self) -> str:
+        return self._get_env_or_kv("AZURE_SEARCH_ENDPOINT", "azure-search-endpoint")
+
+    @property
+    def azure_storage_account_url(self) -> str:
+        return self._get_env_or_kv("AZURE_STORAGE_ACCOUNT_URL", "azure-storage-account-url")
+
+    @property
+    def azure_redis_host(self) -> str:
+        return self._get_env_or_kv("AZURE_REDIS_HOST", "azure-redis-host")
+
+    # --- API Keys & Connection Strings ---
     @property
     def openai_api_key(self) -> str:
         return self._kv.get_secret("azure-openai-api-key")
@@ -80,6 +92,30 @@ class SecretsManager:
     @property
     def translator_key(self) -> str:
         return self._kv.get_secret("translator-api-key")
+
+    # --- Deployment Names & Model Configuration ---
+    @property
+    def openai_chat_deployment(self) -> str:
+        return self._get_env_or_kv("OPENAI_CHAT_DEPLOYMENT", "openai-chat-deployment", "gpt-4o")
+
+    @property
+    def openai_embedding_deployment(self) -> str:
+        return self._get_env_or_kv("OPENAI_EMBEDDING_DEPLOYMENT", "openai-embedding-deployment", "text-embedding-3-large")
+
+    @property
+    def embedding_dimensions(self) -> int:
+        val = self._get_env_or_kv("EMBEDDING_DIMENSIONS", "embedding-dimensions", "3072")
+        return int(val)
+
+    # --- Auth Identifiers ---
+    @property
+    def azure_tenant_id(self) -> str:
+        return self._get_env_or_kv("AZURE_TENANT_ID", "azure-tenant-id")
+
+    @property
+    def azure_client_id(self) -> str:
+        return self._get_env_or_kv("AZURE_CLIENT_ID", "azure-client-id")
+
 
 
 @lru_cache(maxsize=1)

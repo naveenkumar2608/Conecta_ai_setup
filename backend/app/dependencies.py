@@ -13,7 +13,7 @@ from app.services.embedding_service import EmbeddingService
 from app.services.search_service import SearchService
 from app.services.content_safety import ContentSafetyService
 from app.services.translation_service import TranslationService
-from app.services.analytics_service import AnalyticsService
+
 from app.services.cache_service import CacheService
 from app.services.chat_service import ChatService
 from app.services.service_bus_client import ServiceBusPublisher
@@ -24,7 +24,7 @@ from app.repositories.search_repo import SearchRepository
 from app.agents.supervisor import SupervisorAgent
 from app.agents.retrieval_agent import RetrievalAgent
 from app.agents.coaching_agent import CoachingInsightsAgent
-from app.agents.analytics_agent import AnalyticsAgent
+
 from app.agents.recommendation_agent import RecommendationAgent
 from app.agents.graph import CoachingGraphBuilder
 
@@ -38,7 +38,7 @@ _embedding_service: EmbeddingService | None = None
 _search_service: SearchService | None = None
 _content_safety: ContentSafetyService | None = None
 _translation_service: TranslationService | None = None
-_analytics_service: AnalyticsService | None = None
+
 _cache_service: CacheService | None = None
 _chat_service: ChatService | None = None
 _service_bus: ServiceBusPublisher | None = None
@@ -50,8 +50,10 @@ _search_repo: SearchRepository | None = None
 async def init_services():
     """Initialize all service singletons at application startup."""
     global _llm_service, _embedding_service, _search_service
-    global _content_safety, _translation_service, _analytics_service
+    global _content_safety, _translation_service
+
     global _cache_service, _chat_service, _service_bus
+
     global _postgres_repo, _blob_repo, _search_repo
 
     logger.info("Initializing services...")
@@ -72,11 +74,7 @@ async def init_services():
     _content_safety = ContentSafetyService()
     _translation_service = TranslationService()
     _cache_service = CacheService()
-    _service_bus = ServiceBusPublisher()
 
-    _analytics_service = AnalyticsService(
-        db_session_factory=_postgres_repo.async_session
-    )
 
     # ── Initialize agents ───────────────────────────
     supervisor = SupervisorAgent(llm_service=_llm_service)
@@ -85,10 +83,7 @@ async def init_services():
         embedding_service=_embedding_service,
     )
     coaching_agent = CoachingInsightsAgent(llm_service=_llm_service)
-    analytics_agent = AnalyticsAgent(
-        llm_service=_llm_service,
-        analytics_service=_analytics_service,
-    )
+
     recommendation_agent = RecommendationAgent(llm_service=_llm_service)
 
     # ── Build LangGraph with Redis checkpointer ────
@@ -96,7 +91,7 @@ async def init_services():
         supervisor=supervisor,
         retrieval_agent=retrieval_agent,
         coaching_agent=coaching_agent,
-        analytics_agent=analytics_agent,
+
         recommendation_agent=recommendation_agent,
         content_safety=_content_safety,
         redis_client=_cache_service.client,  # Redis for state persistence
@@ -182,13 +177,8 @@ def get_cache_service() -> CacheService:
     return _cache_service
 
 
-def get_analytics_service() -> AnalyticsService:
-    if _analytics_service is None:
-        raise HTTPException(status_code=503, detail="Analytics service not initialized")
-    return _analytics_service
-
-
 def get_service_bus() -> ServiceBusPublisher:
     if _service_bus is None:
         raise HTTPException(status_code=503, detail="Service bus not initialized")
     return _service_bus
+

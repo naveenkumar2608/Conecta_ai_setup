@@ -109,13 +109,14 @@ async def main(blob: func.InputStream):
     search_uploader = SearchUploader(
         endpoint=secrets.search_endpoint,
         api_key=secrets.search_api_key,
-        index_name="connecta-coaching-index",
+        index_name=secrets.search_index_name,
     )
     embedder = EmbeddingGenerator(
         endpoint=secrets.openai_endpoint,
         api_key=secrets.openai_api_key,
-        deployment="text-embedding-3-large",
+        deployment=secrets.openai_embedding_deployment,
     )
+
     sb_client = ServiceBusClient.from_connection_string(
         secrets.service_bus_connection_string
     )

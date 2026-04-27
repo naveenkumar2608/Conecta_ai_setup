@@ -25,6 +25,12 @@ class KeyVaultManager:
 
     def get_secret(self, secret_name: str) -> str:
         """Retrieve a secret from Key Vault with in-memory caching."""
+        if not self.vault_url:
+            logger.warning(
+                f"Key Vault URL not set. Skipping secret retrieval for {secret_name}"
+            )
+            return ""
+
         if secret_name in self._cache:
             return self._cache[secret_name]
         
@@ -46,5 +52,8 @@ class KeyVaultManager:
 def get_keyvault_manager() -> KeyVaultManager:
     """Singleton Key Vault manager."""
     import os
-    vault_url = os.environ["AZURE_KEYVAULT_URL"]
+    vault_url = os.getenv("AZURE_KEYVAULT_URL", "")
+    if not vault_url:
+        logger.warning("AZURE_KEYVAULT_URL is not set in environment.")
     return KeyVaultManager(vault_url)
+
