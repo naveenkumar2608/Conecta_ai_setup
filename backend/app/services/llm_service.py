@@ -16,14 +16,14 @@ class LLMService:
     """
 
     def __init__(self):
-        self._settings = get_settings()
         self._secrets = get_secrets()
         self._base_kwargs = {
-            "azure_endpoint": self._settings.azure_openai_endpoint,
+            "azure_endpoint": self._secrets.azure_openai_endpoint,
             "api_key": self._secrets.openai_api_key,
             "api_version": "2024-06-01",
-            "azure_deployment": self._settings.openai_chat_deployment,
+            "azure_deployment": self._secrets.openai_chat_deployment,
         }
+
 
     def get_chat_model(
         self,

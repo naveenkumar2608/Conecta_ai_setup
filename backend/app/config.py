@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
+
 
 
 class SecretsManager:
@@ -57,15 +59,20 @@ class SecretsManager:
     # --- Endpoints ---
     @property
     def azure_openai_endpoint(self) -> str:
-        return self._get_env_or_kv("AZURE_OPENAI_ENDPOINT", "azure-openai-endpoint")
+        return self._get_env_or_kv("AZURE_OPENAI_ENDPOINT", "AzureOpenAI-embedding-Endpoint")
 
     @property
     def azure_search_endpoint(self) -> str:
-        return self._get_env_or_kv("AZURE_SEARCH_ENDPOINT", "azure-search-endpoint")
+        return self._get_env_or_kv("AZURE_SEARCH_ENDPOINT", "AZURE-SEARCH-ENDPOINT")
 
     @property
     def azure_storage_account_url(self) -> str:
+        # Defaults to account URL if provided, but we can also handle BLOB-CONN-STR
         return self._get_env_or_kv("AZURE_STORAGE_ACCOUNT_URL", "azure-storage-account-url")
+
+    @property
+    def blob_connection_string(self) -> str:
+        return self._get_env_or_kv("BLOB_CONN_STR", "BLOB-CONN-STR")
 
     @property
     def azure_redis_host(self) -> str:
@@ -74,15 +81,15 @@ class SecretsManager:
     # --- API Keys & Connection Strings ---
     @property
     def openai_api_key(self) -> str:
-        return self._get_env_or_kv("AZURE_OPENAI_API_KEY", "azure-openai-api-key")
+        return self._get_env_or_kv("AZURE_OPENAI_API_KEY", "AzureOpenAI-embedding-Key")
 
     @property
     def search_api_key(self) -> str:
-        return self._get_env_or_kv("AZURE_SEARCH_API_KEY", "azure-search-api-key")
+        return self._get_env_or_kv("AZURE_SEARCH_API_KEY", "SEARCH-AI-KEY")
 
     @property
     def postgres_connection_string(self) -> str:
-        return self._get_env_or_kv("POSTGRES_CONNECTION_STRING", "postgres-connection-string")
+        return self._get_env_or_kv("POSTGRES_CONNECTION_STRING", "POSTGRES-CONN-STR")
 
     @property
     def redis_password(self) -> str:
@@ -90,7 +97,7 @@ class SecretsManager:
 
     @property
     def service_bus_connection_string(self) -> str:
-        return self._get_env_or_kv("SERVICE_BUS_CONNECTION_STRING", "service-bus-connection-string")
+        return self._get_env_or_kv("SERVICE_BUS_CONNECTION_STRING", "SERVICE-BUS-CONN-STR")
 
     @property
     def content_safety_key(self) -> str:
@@ -100,7 +107,6 @@ class SecretsManager:
     def translator_key(self) -> str:
         return self._get_env_or_kv("TRANSLATOR_API_KEY", "translator-api-key")
 
-
     # --- Deployment Names & Model Configuration ---
     @property
     def openai_chat_deployment(self) -> str:
@@ -108,7 +114,12 @@ class SecretsManager:
 
     @property
     def openai_embedding_deployment(self) -> str:
-        return self._get_env_or_kv("OPENAI_EMBEDDING_DEPLOYMENT", "openai-embedding-deployment", "text-embedding-3-large")
+        return self._get_env_or_kv("OPENAI_EMBEDDING_DEPLOYMENT", "AzureOpenAI-embedding-DeploymentName", "text-embedding-3-large")
+
+    @property
+    def search_index_name(self) -> str:
+        return self._get_env_or_kv("SEARCH_INDEX_NAME", "SEARCH-INDEX-NAME", "connecta-coaching-index")
+
 
     @property
     def embedding_dimensions(self) -> int:

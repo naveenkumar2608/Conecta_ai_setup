@@ -17,11 +17,11 @@ class SearchRepository:
     """
 
     def __init__(self):
-        settings = get_settings()
         secrets = get_secrets()
         self.credential = AzureKeyCredential(secrets.search_api_key)
-        self.endpoint = settings.azure_search_endpoint
-        self.index_name = settings.search_index_name
+        self.endpoint = secrets.azure_search_endpoint
+        self.index_name = secrets.search_index_name
+
 
         self.search_client = SearchClient(
             endpoint=self.endpoint,

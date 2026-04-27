@@ -16,15 +16,15 @@ class EmbeddingService:
     """
 
     def __init__(self):
-        settings = get_settings()
         secrets = get_secrets()
         self.client = AsyncAzureOpenAI(
-            azure_endpoint=settings.azure_openai_endpoint,
+            azure_endpoint=secrets.azure_openai_endpoint,
             api_key=secrets.openai_api_key,
             api_version="2024-06-01",
         )
-        self.deployment = settings.openai_embedding_deployment
-        self.dimensions = settings.embedding_dimensions
+        self.deployment = secrets.openai_embedding_deployment
+        self.dimensions = secrets.embedding_dimensions
+
 
     async def generate_embedding(self, text: str) -> list[float]:
         """

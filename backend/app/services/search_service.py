@@ -23,11 +23,13 @@ class SearchService:
         settings = get_settings()
         secrets = get_secrets()
         self.client = SearchClient(
-            endpoint=settings.azure_search_endpoint,
-            index_name=settings.search_index_name,
+            endpoint=secrets.azure_search_endpoint,
+            index_name=secrets.search_index_name,
             credential=AzureKeyCredential(secrets.search_api_key),
         )
+
         self.semantic_config = settings.search_semantic_config
+
 
     async def hybrid_search(
         self,

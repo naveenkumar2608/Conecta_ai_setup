@@ -60,9 +60,13 @@ async def init_services():
     secrets = get_secrets()
 
     # ── Initialize repositories ─────────────────────
-    _postgres_repo = PostgresRepository(
-        connection_string=secrets.postgres_connection_string
-    )
+    conn_str = secrets.postgres_connection_string
+    if not conn_str:
+        logger.error("POSTGRES_CONNECTION_STRING is empty. Check your .env or Key Vault firewall.")
+        raise ValueError("Database connection string is required but not found.")
+
+    _postgres_repo = PostgresRepository(connection_string=conn_str)
+
     _blob_repo = BlobRepository()
     _search_repo = SearchRepository()
 

@@ -1,7 +1,8 @@
 # backend/app/repositories/blob_repo.py
 from azure.storage.blob.aio import BlobServiceClient
 from azure.identity.aio import DefaultAzureCredential
-from app.config import get_settings
+from app.config import get_settings, get_secrets
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,12 +15,12 @@ class BlobRepository:
     """
 
     def __init__(self):
-        settings = get_settings()
-        self.credential = DefaultAzureCredential()
-        self.client = BlobServiceClient(
-            account_url=settings.azure_storage_account_url,
-            credential=self.credential,
+        secrets = get_secrets()
+        self.client = BlobServiceClient.from_connection_string(
+            secrets.blob_connection_string
         )
+
+
 
     async def upload_blob(
         self,
