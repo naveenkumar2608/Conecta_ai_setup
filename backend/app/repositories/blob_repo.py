@@ -16,9 +16,21 @@ class BlobRepository:
 
     def __init__(self):
         secrets = get_secrets()
-        self.client = BlobServiceClient.from_connection_string(
-            secrets.blob_connection_string
-        )
+        self.credential = DefaultAzureCredential()
+        
+        # Use storage account URL from Key Vault for Managed Identity
+        account_url = secrets.azure_storage_account_url
+        
+        if account_url:
+            self.client = BlobServiceClient(
+                account_url=account_url,
+                credential=self.credential
+            )
+        else:
+            # Fallback to connection string from Key Vault if URL is not provided
+            self.client = BlobServiceClient.from_connection_string(
+                secrets.blob_connection_string
+            )
 
 
 
