@@ -2,7 +2,7 @@
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.indexes.aio import SearchIndexClient
 from azure.core.credentials import AzureKeyCredential
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,10 +17,10 @@ class SearchRepository:
     """
 
     def __init__(self):
-        secrets = get_secrets()
-        self.credential = AzureKeyCredential(secrets.search_api_key)
-        self.endpoint = secrets.azure_search_endpoint
-        self.index_name = secrets.search_index_name
+        settings = get_settings()
+        self.credential = AzureKeyCredential(settings.search_api_key)
+        self.endpoint = settings.search_endpoint
+        self.index_name = settings.search_index_name
 
 
         self.search_client = SearchClient(

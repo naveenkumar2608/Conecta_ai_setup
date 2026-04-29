@@ -27,13 +27,12 @@ class ChatService:
 
     def __init__(
         self,
-        graph: "AgentGraph",
-
-        cache_service: CacheService,
-        translation_service: TranslationService,
+        compiled_graph: any,
+        cache_service: CacheService | None,
+        translation_service: TranslationService | None,
         postgres_repo: PostgresRepository,
     ):
-        self.compiled_graph = graph.build()
+        self.compiled_graph = compiled_graph
         self.cache = cache_service
         self.translator = translation_service
         self.db = postgres_repo
@@ -53,14 +52,15 @@ class ChatService:
 
         # ── Step 1: Check cache ──────────────────────────────
         cache_key = f"chat:{user_id}:{hash(message)}"
-        cached_response = await self.cache.get(cache_key)
-        if cached_response:
-            logger.info(f"Cache hit for user {user_id}")
-            return ChatResult.model_validate_json(cached_response)
+        if self.cache:
+            cached_response = await self.cache.get(cache_key)
+            if cached_response:
+                logger.info(f"Cache hit for user {user_id}")
+                return ChatResult.model_validate_json(cached_response)
 
         # ── Step 2: Translate if needed ──────────────────────
         translated_message = message
-        if language != "en":
+        if language != "en" and self.translator:
             translated_message = await self.translator.translate(
                 text=message, 
                 from_lang=language, 
@@ -108,7 +108,7 @@ class ChatService:
             "final_response", 
             "I couldn't process your request. Please try again."
         )
-        if language != "en":
+        if language != "en" and self.translator:
             response_text = await self.translator.translate(
                 text=response_text, 
                 from_lang="en", 
@@ -140,9 +140,10 @@ class ChatService:
         )
 
         # ── Step 8: Cache response ───────────────────────────
-        await self.cache.set(
-            cache_key, result.model_dump_json(), ttl=600
-        )
+        if self.cache:
+            await self.cache.set(
+                cache_key, result.model_dump_json(), ttl=600
+            )
 
         # ── Step 9: Persist conversation ─────────────────────
         await self.db.save_message(
@@ -175,7 +176,7 @@ class ChatService:
             session_id = str(uuid.uuid4())
 
         translated_message = message
-        if language != "en":
+        if language != "en" and self.translator:
             translated_message = await self.translator.translate(
                 text=message, from_lang=language, to_lang="en"
             )
@@ -230,17 +231,18 @@ class ChatService:
     ) -> list:
         """Load conversation history from cache or DB."""
         cache_key = f"history:{user_id}:{session_id}"
-        cached = await self.cache.get(cache_key)
-        if cached:
-            import json
-            messages_data = json.loads(cached)
-            return [
-                HumanMessage(content=m["content"])
-                if m["role"] == "user"
-                else HumanMessage(content=m["content"])  
-                # Simplified — in production, use AIMessage for assistant
-                for m in messages_data
-            ]
+        if self.cache:
+            cached = await self.cache.get(cache_key)
+            if cached:
+                import json
+                messages_data = json.loads(cached)
+                return [
+                    HumanMessage(content=m["content"])
+                    if m["role"] == "user"
+                    else HumanMessage(content=m["content"])  
+                    # Simplified — in production, use AIMessage for assistant
+                    for m in messages_data
+                ]
         
         db_messages = await self.db.get_session_messages(
             session_id=session_id, user_id=user_id

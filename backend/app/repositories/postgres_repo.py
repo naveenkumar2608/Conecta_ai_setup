@@ -27,6 +27,19 @@ class PostgresRepository:
     Uses SQLAlchemy async ORM for type-safe queries.
     """
 
+    def _parse_uuid(self, id_str: str | None, name: str = "ID") -> uuid.UUID | None:
+        """Helper to safely parse UUID strings."""
+        if not id_str:
+            return None
+        try:
+            return uuid.UUID(id_str)
+        except (ValueError, TypeError):
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid format for {name}: {id_str}. Expected a valid UUID."
+            )
+
     def __init__(self, connection_string: str):
         """
         Args:
@@ -71,7 +84,7 @@ class PostgresRepository:
         """Insert a new file metadata record."""
         async with self.async_session() as session:
             record = FileMetadata(
-                upload_id=uuid.UUID(upload_id),
+                upload_id=self._parse_uuid(upload_id, "upload_id"),
                 user_id=user_id,
                 file_name=file_name,
                 blob_url=blob_url,
@@ -93,7 +106,7 @@ class PostgresRepository:
         async with self.async_session() as session:
             result = await session.execute(
                 select(FileMetadata).where(
-                    FileMetadata.upload_id == uuid.UUID(upload_id),
+                    FileMetadata.upload_id == self._parse_uuid(upload_id, "upload_id"),
                     FileMetadata.user_id == user_id,
                 )
             )
@@ -109,7 +122,7 @@ class PostgresRepository:
         async with self.async_session() as session:
             result = await session.execute(
                 select(FileMetadata).where(
-                    FileMetadata.upload_id == uuid.UUID(upload_id)
+                    FileMetadata.upload_id == self._parse_uuid(upload_id, "upload_id")
                 )
             )
             record = result.scalar_one_or_none()
@@ -141,10 +154,11 @@ class PostgresRepository:
         Creates the session if it doesn't exist.
         """
         async with self.async_session() as session:
+            parsed_session_id = self._parse_uuid(session_id, "session_id")
             # Ensure session exists
             sess_result = await session.execute(
                 select(ConversationSession).where(
-                    ConversationSession.session_id == uuid.UUID(session_id)
+                    ConversationSession.session_id == parsed_session_id
                 )
             )
             conv_session = sess_result.scalar_one_or_none()
@@ -153,7 +167,7 @@ class PostgresRepository:
                 # Create new conversation session
                 title = content[:100] if role == "user" else "New Conversation"
                 conv_session = ConversationSession(
-                    session_id=uuid.UUID(session_id),
+                    session_id=parsed_session_id,
                     user_id=user_id,
                     title=title,
                 )
@@ -164,7 +178,7 @@ class PostgresRepository:
 
             # Create message
             message = ConversationMessage(
-                session_id=uuid.UUID(session_id),
+                session_id=parsed_session_id,
                 user_id=user_id,
                 role=role,
                 content=content,
@@ -187,7 +201,7 @@ class PostgresRepository:
             result = await session.execute(
                 select(ConversationMessage)
                 .where(
-                    ConversationMessage.session_id == uuid.UUID(session_id),
+                    ConversationMessage.session_id == self._parse_uuid(session_id, "session_id"),
                     ConversationMessage.user_id == user_id,
                 )
                 .order_by(ConversationMessage.created_at.asc())
@@ -263,7 +277,7 @@ class PostgresRepository:
         async with self.async_session() as session:
             result = await session.execute(
                 select(ConversationSession).where(
-                    ConversationSession.session_id == uuid.UUID(session_id),
+                    ConversationSession.session_id == self._parse_uuid(session_id, "session_id"),
                     ConversationSession.user_id == user_id,
                 )
             )

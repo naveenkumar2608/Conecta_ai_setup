@@ -1,7 +1,7 @@
 # backend/app/services/service_bus_client.py
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
-from app.config import get_secrets
+from app.config import get_settings
 import json
 import logging
 
@@ -19,8 +19,8 @@ class ServiceBusPublisher:
     """
 
     def __init__(self):
-        secrets = get_secrets()
-        self.connection_string = secrets.service_bus_connection_string
+        settings = get_settings()
+        self.connection_string = settings.service_bus_connection_string
         self._client: ServiceBusClient | None = None
 
     async def _get_client(self) -> ServiceBusClient:

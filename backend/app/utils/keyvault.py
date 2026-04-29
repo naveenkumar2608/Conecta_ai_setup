@@ -60,3 +60,9 @@ def get_keyvault_manager(vault_url: str | None = None) -> KeyVaultManager:
     return KeyVaultManager(url)
 
 
+def get_secret(secret_name: str) -> str:
+    """Convenience helper to get a secret from the global Key Vault manager."""
+    manager = get_keyvault_manager()
+    return manager.get_secret(secret_name)
+
+

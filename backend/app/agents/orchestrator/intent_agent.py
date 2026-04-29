@@ -19,9 +19,9 @@ Rules:
 - If unsure, return ["coaching_insights"]
 
 Return JSON ONLY:
-{
+{{
   "intents": ["intent1", "intent2"]
-}
+}}
 """
 
 

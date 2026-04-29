@@ -6,7 +6,7 @@ from azure.ai.contentsafety.models import (
 )
 from azure.core.credentials import AzureKeyCredential
 from dataclasses import dataclass
-from app.config import get_secrets
+from app.config import get_settings
 import os
 import re
 import logging
@@ -42,14 +42,14 @@ class ContentSafetyService:
     }
 
     def __init__(self):
-        secrets = get_secrets()
+        settings = get_settings()
         endpoint = os.environ.get(
             "AZURE_CONTENT_SAFETY_ENDPOINT",
             "https://connecta-content-safety.cognitiveservices.azure.com",
         )
         self.client = ContentSafetyClient(
             endpoint=endpoint,
-            credential=AzureKeyCredential(secrets.content_safety_key),
+            credential=AzureKeyCredential(settings.content_safety_key),
         )
 
     async def analyze_text(self, text: str) -> SafetyResult:

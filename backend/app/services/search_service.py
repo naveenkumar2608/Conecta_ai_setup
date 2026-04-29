@@ -7,7 +7,7 @@ from azure.search.documents.models import (
     QueryAnswerType,
 )
 from azure.core.credentials import AzureKeyCredential
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,10 @@ class SearchService:
 
     def __init__(self):
         settings = get_settings()
-        secrets = get_secrets()
         self.client = SearchClient(
-            endpoint=secrets.azure_search_endpoint,
-            index_name=secrets.search_index_name,
-            credential=AzureKeyCredential(secrets.search_api_key),
+            endpoint=settings.search_endpoint,
+            index_name=settings.search_index_name,
+            credential=AzureKeyCredential(settings.search_api_key),
         )
 
         self.semantic_config = settings.search_semantic_config

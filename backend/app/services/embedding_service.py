@@ -1,6 +1,6 @@
 # backend/app/services/embedding_service.py
 from openai import AsyncAzureOpenAI
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,14 +16,13 @@ class EmbeddingService:
     """
 
     def __init__(self):
-        secrets = get_secrets()
+        settings = get_settings()
         self.client = AsyncAzureOpenAI(
-            azure_endpoint=secrets.azure_openai_endpoint,
-            api_key=secrets.openai_api_key,
+            azure_endpoint=settings.openai_embedding_endpoint,
+            api_key=settings.openai_embedding_api_key,
             api_version="2024-06-01",
         )
-        self.deployment = secrets.openai_embedding_deployment
-        self.dimensions = secrets.embedding_dimensions
+        self.deployment = settings.openai_embedding_deployment
 
 
     async def generate_embedding(self, text: str) -> list[float]:
@@ -35,7 +34,6 @@ class EmbeddingService:
             response = await self.client.embeddings.create(
                 input=[text],
                 model=self.deployment,
-                dimensions=self.dimensions,
             )
             return response.data[0].embedding
         except Exception as e:
@@ -50,7 +48,6 @@ class EmbeddingService:
             response = await self.client.embeddings.create(
                 input=texts,
                 model=self.deployment,
-                dimensions=self.dimensions,
             )
             return [item.embedding for item in response.data]
         except Exception as e:

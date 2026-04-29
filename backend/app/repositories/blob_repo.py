@@ -1,7 +1,7 @@
 # backend/app/repositories/blob_repo.py
 from azure.storage.blob.aio import BlobServiceClient
 from azure.identity.aio import DefaultAzureCredential
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 
 import logging
 
@@ -15,22 +15,26 @@ class BlobRepository:
     """
 
     def __init__(self):
-        secrets = get_secrets()
+        settings = get_settings()
         self.credential = DefaultAzureCredential()
         
         # Use storage account URL from Key Vault for Managed Identity
-        account_url = secrets.azure_storage_account_url
+        account_url = getattr(settings, "azure_storage_account_url", None)
         
-        if account_url:
+        # Robust check: ensures URL is not just 'https://' or empty
+        if account_url and len(account_url) > 8: 
             self.client = BlobServiceClient(
                 account_url=account_url,
                 credential=self.credential
             )
         else:
-            # Fallback to connection string from Key Vault if URL is not provided
-            self.client = BlobServiceClient.from_connection_string(
-                secrets.blob_connection_string
-            )
+            # Fallback to connection string from Key Vault if URL is not provided or invalid
+            conn_str = settings.blob_conn_str
+            if not conn_str:
+                logger.error("No valid Blob Storage URL or connection string found.")
+                raise ValueError("Blob storage configuration is missing.")
+            
+            self.client = BlobServiceClient.from_connection_string(conn_str)
 
 
 

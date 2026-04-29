@@ -2,7 +2,7 @@
 import httpx
 import logging
 import uuid
-from app.config import get_secrets
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class TranslationService:
     }
 
     def __init__(self):
-        secrets = get_secrets()
-        self.api_key = secrets.translator_key
+        settings = get_settings()
+        self.api_key = settings.translator_key
         self.region = "eastus"  # Azure region for Translator
 
     async def translate(

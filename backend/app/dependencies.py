@@ -5,15 +5,12 @@ Initializes all services at startup and provides FastAPI Depends() functions.
 """
 
 from fastapi import HTTPException, Request
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 from app.models.api_models import UserContext
 
 from app.services.llm_service import LLMService
 from app.services.embedding_service import EmbeddingService
 from app.services.search_service import SearchService
-from app.services.content_safety import ContentSafetyService
-from app.services.translation_service import TranslationService
-
 from app.services.cache_service import CacheService
 from app.services.chat_service import ChatService
 from app.services.service_bus_client import ServiceBusPublisher
@@ -38,8 +35,8 @@ logger = logging.getLogger(__name__)
 _llm_service: LLMService | None = None
 _embedding_service: EmbeddingService | None = None
 _search_service: SearchService | None = None
-_content_safety: ContentSafetyService | None = None
-_translation_service: TranslationService | None = None
+# _content_safety: ContentSafetyService | None = None
+# _translation_service: TranslationService | None = None
 _cache_service: CacheService | None = None
 _chat_service: ChatService | None = None
 _service_bus: ServiceBusPublisher | None = None
@@ -51,21 +48,28 @@ _search_repo: SearchRepository | None = None
 async def init_services():
     """Initialize all service singletons at application startup."""
     global _llm_service, _embedding_service, _search_service
-    global _content_safety, _translation_service
-    global _cache_service, _chat_service, _service_bus
+    # global _content_safety, _translation_service
+    # global _cache_service, _chat_service, _service_bus
+    global _chat_service, _service_bus
     global _postgres_repo, _blob_repo, _search_repo
 
     logger.info("Initializing services...")
 
-    secrets = get_secrets()
+    settings = get_settings()
 
     # ── Initialize repositories ─────────────────────
-    conn_str = secrets.postgres_connection_string
+    conn_str = settings.postgres_conn_str
     if not conn_str:
         logger.error("POSTGRES_CONNECTION_STRING is empty. Check your .env or Key Vault firewall.")
         raise ValueError("Database connection string is required but not found.")
 
     _postgres_repo = PostgresRepository(connection_string=conn_str)
+    
+    # ── Create tables if they don't exist ──────────
+    from app.models.db_models import Base
+    async with _postgres_repo.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables verified/created")
 
     _blob_repo = BlobRepository()
     _search_repo = SearchRepository()
@@ -74,16 +78,16 @@ async def init_services():
     _llm_service = LLMService()
     _embedding_service = EmbeddingService()
     _search_service = SearchService()
-    _content_safety = ContentSafetyService()
-    _translation_service = TranslationService()
-    _cache_service = CacheService()
+    # _content_safety = ContentSafetyService()
+    # _translation_service = TranslationService()
+    # _cache_service = CacheService()
     _service_bus = ServiceBusPublisher()
 
     # ── Initialize agents ───────────────────────────
     intent_agent = IntentAgent(llm_service=_llm_service)
     planner_agent = PlannerAgent(llm_service=_llm_service)
     executor = Executor()
-    aggregator = Aggregator()
+    aggregator = Aggregator(llm_service=_llm_service)
     
     retrieval_agent = RetrievalAgent(
         search_service=_search_service,
@@ -106,9 +110,9 @@ async def init_services():
 
     # ── Initialize chat service ─────────────────────
     _chat_service = ChatService(
-        graph=graph,
-        cache_service=_cache_service,
-        translation_service=_translation_service,
+        compiled_graph=graph,
+        cache_service=None,        # Disabled
+        translation_service=None,  # Disabled
         postgres_repo=_postgres_repo,
     )
 
@@ -122,10 +126,10 @@ async def shutdown_services():
 
     if _search_service:
         await _search_service.close()
-    if _content_safety:
-        await _content_safety.close()
-    if _cache_service:
-        await _cache_service.close()
+    # if _content_safety:
+    #     await _content_safety.close()
+    # if _cache_service:
+    #     await _cache_service.close()
     if _service_bus:
         await _service_bus.close()
     if _postgres_repo:
@@ -179,9 +183,7 @@ def get_search_repo() -> SearchRepository:
     return _search_repo
 
 
-def get_cache_service() -> CacheService:
-    if _cache_service is None:
-        raise HTTPException(status_code=503, detail="Cache not initialized")
+def get_cache_service() -> CacheService | None:
     return _cache_service
 
 

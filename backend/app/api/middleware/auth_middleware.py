@@ -13,10 +13,9 @@ import os
 logger = logging.getLogger(__name__)
 
 # Paths that don't require authentication
-PUBLIC_PATHS = {"/health", "/api/docs", "/openapi.json"}
+PUBLIC_PATHS = {"/health", "/api/docs", "/openapi.json", "/docs", "/redoc"}
 # Developer bypass configuration (for local testing)
 DEVELOPER_BYPASS_HEADER = "X-Developer-Id"
-ALLOW_AUTH_BYPASS = os.getenv("ALLOW_AUTH_BYPASS", "false").lower() == "true"
 
 
 
@@ -49,8 +48,9 @@ class AzureADAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Check for Developer Bypass (only if enabled via env)
-        dev_id = request.headers.get(DEVELOPER_BYPASS_HEADER)
-        if ALLOW_AUTH_BYPASS and dev_id:
+        allow_bypass = os.getenv("ALLOW_AUTH_BYPASS", "false").lower() == "true"
+        dev_id = request.headers.get(DEVELOPER_BYPASS_HEADER) or "local_dev_user"
+        if allow_bypass:
             logger.info(f"Using developer bypass for user: {dev_id}")
             request.state.user_id = dev_id
             request.state.user_email = f"{dev_id}@dev.local"

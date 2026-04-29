@@ -1,6 +1,6 @@
 # backend/app/services/llm_service.py
 from langchain_openai import AzureChatOpenAI
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,12 +16,12 @@ class LLMService:
     """
 
     def __init__(self):
-        self._secrets = get_secrets()
+        settings = get_settings()
         self._base_kwargs = {
-            "azure_endpoint": self._secrets.azure_openai_endpoint,
-            "api_key": self._secrets.openai_api_key,
+            "azure_endpoint": settings.openai_endpoint,
+            "api_key": settings.openai_api_key,
             "api_version": "2024-06-01",
-            "azure_deployment": self._secrets.openai_chat_deployment,
+            "azure_deployment": settings.openai_chat_deployment,
         }
 
 
@@ -42,7 +42,7 @@ class LLMService:
         return AzureChatOpenAI(
             **self._base_kwargs,
             temperature=temperature,
-            max_tokens=max_tokens,
+            max_completion_tokens=max_tokens,  # Fixed for compatibility with newer models
             streaming=streaming,
         )
 

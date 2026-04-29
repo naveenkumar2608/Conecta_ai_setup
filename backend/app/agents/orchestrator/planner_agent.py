@@ -39,9 +39,9 @@ Planning Rules:
 
 
 Return JSON ONLY:
-{
+{{
   "plan": ["agent1", "agent2", "..."]
-}
+}}
 """
 
 

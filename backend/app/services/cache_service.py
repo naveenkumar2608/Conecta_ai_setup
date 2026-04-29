@@ -1,6 +1,6 @@
 # backend/app/services/cache_service.py
 import redis.asyncio as redis
-from app.config import get_settings, get_secrets
+from app.config import get_settings
 import json
 import logging
 
@@ -19,11 +19,10 @@ class CacheService:
 
     def __init__(self):
         settings = get_settings()
-        secrets = get_secrets()
         self.client = redis.Redis(
             host=settings.azure_redis_host,
             port=6380,
-            password=secrets.redis_password,
+            password=settings.redis_password,
             ssl=True,
             decode_responses=True,
             socket_timeout=5,
